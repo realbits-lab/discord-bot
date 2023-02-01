@@ -39,7 +39,7 @@ module.exports = {
 
     try {
       //* Call hugging space with prompt and get response.
-      const response = hfGetSpaceQuery(prompt);
+      const response = await hfGetSpaceQuery(prompt);
       console.log("response: ", response);
       console.log("response.status: ", response.status);
       console.log("response.statusText: ", response.statusText);
