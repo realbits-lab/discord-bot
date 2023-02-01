@@ -28,6 +28,8 @@ module.exports = {
     const DOWNLOAD_DIRECTORY = "../download_files/";
     const MINT_PAGE_URL = process.env.MINT_PAGE_URL;
     const API_POST_URL = process.env.API_POST_URL;
+    console.log("MINT_PAGE_URL: ", MINT_PAGE_URL);
+    console.log("API_POST_URL: ", API_POST_URL);
 
     let waiting_count = 0;
     let is_drawing_finished = false;
