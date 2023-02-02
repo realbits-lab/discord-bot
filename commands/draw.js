@@ -36,7 +36,6 @@ module.exports = {
     await interaction.reply("Wait a moment for drawing ...");
 
     const prompt = interaction.options.getString("prompt");
-    // console.log("__dirname: ", __dirname);
     console.log("prompt: ", prompt);
     try {
       //* Call hugging space with prompt and get response.
@@ -47,6 +46,7 @@ module.exports = {
 
         //* Handle response error.
         if (response === undefined || response.status !== 200) {
+          is_drawing_finished = true;
           await interaction.editReply(
             `Sorry for that server error(${response.statusText}) happened. Please try later.`
           );
@@ -106,25 +106,46 @@ module.exports = {
         console.log("imageUrl: ", imageUrl);
 
         //* Post imageUrl and prompt to prompt server.
-        const fetchResponse = await fetch(API_POST_URL, {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ prompt: prompt, imageUrl: imageUrl }),
-        });
-        console.log("fetchResponse.status: ", fetchResponse.status);
-        console.log("fetchResponse.statusText: ", fetchResponse.statusText);
-        if (fetchResponse.status === 200) {
-          const content = await fetchResponse.json();
-          console.log("content: ", content);
-        } else {
+        try {
+          const fetchResponse = await fetch(API_POST_URL, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ prompt: prompt, imageUrl: imageUrl }),
+          });
+          console.log("fetchResponse.status: ", fetchResponse.status);
+          console.log("fetchResponse.statusText: ", fetchResponse.statusText);
+
+          if (fetchResponse.status === 200) {
+            const content = await fetchResponse.json();
+            console.log("content: ", content);
+          } else {
+            //* Handle post error case.
+            console.error(fetchResponse);
+            is_drawing_finished = true;
+            await interaction.editReply(`Error: ${fetchResponse.statusText}`);
+            return;
+          }
+        } catch (error) {
           //* Handle post error case.
-          console.error(fetchResponse);
-          await interaction.editReply(`Error: ${fetchResponse.statusText}`);
+          console.error(error);
+          is_drawing_finished = true;
+          await interaction.editReply(`Error: ${error}`);
           return;
         }
+
+        //* If uploading succeeded, remove downloaded image file.
+        fs.unlink(filePath, (error) => {
+          if (error) {
+            console.log(error);
+            is_drawing_finished = true;
+            return;
+          } else {
+            console.log(`Deleted file: ${filePath}`);
+          }
+        });
 
         //* Write mint message title.
         const imageUrlEncodedString = encodeURIComponent(imageUrl);
@@ -149,6 +170,8 @@ module.exports = {
     } catch (error) {
       console.error(error);
       await interaction.editReply(`Error: ${error}`);
+      is_drawing_finished = true;
+      return;
     }
 
     function sleep(ms) {
