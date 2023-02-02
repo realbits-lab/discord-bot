@@ -106,23 +106,31 @@ module.exports = {
         console.log("imageUrl: ", imageUrl);
 
         //* Post imageUrl and prompt to prompt server.
-        const fetchResponse = await fetch(API_POST_URL, {
-          method: "POST",
-          headers: {
-            Accept: "application/json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ prompt: prompt, imageUrl: imageUrl }),
-        });
-        console.log("fetchResponse.status: ", fetchResponse.status);
-        console.log("fetchResponse.statusText: ", fetchResponse.statusText);
-        if (fetchResponse.status === 200) {
-          const content = await fetchResponse.json();
-          console.log("content: ", content);
-        } else {
+        try {
+          const fetchResponse = await fetch(API_POST_URL, {
+            method: "POST",
+            headers: {
+              Accept: "application/json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ prompt: prompt, imageUrl: imageUrl }),
+          });
+          console.log("fetchResponse.status: ", fetchResponse.status);
+          console.log("fetchResponse.statusText: ", fetchResponse.statusText);
+
+          if (fetchResponse.status === 200) {
+            const content = await fetchResponse.json();
+            console.log("content: ", content);
+          } else {
+            //* Handle post error case.
+            console.error(fetchResponse);
+            await interaction.editReply(`Error: ${fetchResponse.statusText}`);
+            return;
+          }
+        } catch (error) {
           //* Handle post error case.
-          console.error(fetchResponse);
-          await interaction.editReply(`Error: ${fetchResponse.statusText}`);
+          console.error(error);
+          await interaction.editReply(`Error: ${error}`);
           return;
         }
 
