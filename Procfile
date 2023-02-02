@@ -1,0 +1,1 @@
+worker: npx pm2 start
