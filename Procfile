@@ -1,1 +1,1 @@
-worker: npx pm2 start
+worker: npm start
