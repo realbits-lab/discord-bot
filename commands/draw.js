@@ -12,11 +12,11 @@ module.exports = {
   //* Command data.
   data: new SlashCommandBuilder()
     .setName("draw")
-    .setDescription("Draw command.")
+    .setDescription("Draw an picture with a prompt command.")
     .addStringOption((option) =>
       option
         .setName("prompt")
-        .setDescription("Draw image as prompt.")
+        .setDescription("The prompt to draw an picture.")
         .setRequired(true)
     ),
 
