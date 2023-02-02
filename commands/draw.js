@@ -36,7 +36,6 @@ module.exports = {
     await interaction.reply("Wait a moment for drawing ...");
 
     const prompt = interaction.options.getString("prompt");
-    // console.log("__dirname: ", __dirname);
     console.log("prompt: ", prompt);
     try {
       //* Call hugging space with prompt and get response.
@@ -47,6 +46,7 @@ module.exports = {
 
         //* Handle response error.
         if (response === undefined || response.status !== 200) {
+          is_drawing_finished = true;
           await interaction.editReply(
             `Sorry for that server error(${response.statusText}) happened. Please try later.`
           );
@@ -124,15 +124,28 @@ module.exports = {
           } else {
             //* Handle post error case.
             console.error(fetchResponse);
+            is_drawing_finished = true;
             await interaction.editReply(`Error: ${fetchResponse.statusText}`);
             return;
           }
         } catch (error) {
           //* Handle post error case.
           console.error(error);
+          is_drawing_finished = true;
           await interaction.editReply(`Error: ${error}`);
           return;
         }
+
+        //* If uploading succeeded, remove downloaded image file.
+        fs.unlink(filePath, (error) => {
+          if (error) {
+            console.log(error);
+            is_drawing_finished = true;
+            return;
+          } else {
+            console.log("\nDeleted file: example_file.txt");
+          }
+        });
 
         //* Write mint message title.
         const imageUrlEncodedString = encodeURIComponent(imageUrl);
@@ -157,6 +170,8 @@ module.exports = {
     } catch (error) {
       console.error(error);
       await interaction.editReply(`Error: ${error}`);
+      is_drawing_finished = true;
+      return;
     }
 
     function sleep(ms) {
