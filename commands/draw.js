@@ -143,7 +143,7 @@ module.exports = {
             is_drawing_finished = true;
             return;
           } else {
-            console.log("\nDeleted file: example_file.txt");
+            console.log(`Deleted file: ${filePath}`);
           }
         });
 
