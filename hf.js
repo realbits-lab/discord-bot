@@ -10,9 +10,12 @@ const optionDefinitions = [
   { name: "prompt", alias: "p", type: String },
 ];
 
+const HF_API_URL = "https://huggingface.co";
+const HF_MODEL_URL = "https://api-inference.huggingface.co/models/";
+
 async function hfAPIGETQuery(api) {
   try {
-    const response = await fetch(`https://huggingface.co${api}`, {
+    const response = await fetch(`${HF_API_URL}${api}`, {
       headers: { Authorization: `Bearer ${process.env.HF_API_TOKEN}` },
       method: "GET",
     });
@@ -24,16 +27,13 @@ async function hfAPIGETQuery(api) {
 
 async function hfGetSpaceQuery(data) {
   try {
-    const response = await fetch(
-      "https://thomasjeon-dulls.hf.space/run/predict",
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          data: [data],
-        }),
-      }
-    );
+    const response = await fetch(process.env.HF_SPACE_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        data: [data],
+      }),
+    });
     return response;
   } catch (error) {
     console.error(error);
@@ -43,14 +43,11 @@ exports.hfGetSpaceQuery = hfGetSpaceQuery;
 
 async function hfGetModelQuery(model, data) {
   try {
-    const response = await fetch(
-      `https://api-inference.huggingface.co/models/${model}`,
-      {
-        headers: { Authorization: `Bearer ${process.env.HF_API_TOKEN}` },
-        method: "POST",
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetch(`${HF_MODEL_URL}${model}`, {
+      headers: { Authorization: `Bearer ${process.env.HF_API_TOKEN}` },
+      method: "POST",
+      body: JSON.stringify(data),
+    });
     return response;
   } catch (error) {
     console.error(error);

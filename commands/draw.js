@@ -12,28 +12,29 @@ module.exports = {
   //* Command data.
   data: new SlashCommandBuilder()
     .setName("draw")
-    .setDescription("Draw command.")
+    .setDescription("Draw an picture with a prompt command.")
     .addStringOption((option) =>
       option
         .setName("prompt")
-        .setDescription("Draw image as prompt.")
+        .setDescription("The prompt to draw an picture.")
         .setRequired(true)
     ),
 
   //* Command process.
   async execute(interaction) {
-    console.log("call /draw");
+    console.log("call /draw command");
 
     const MAX_WAITING_COUNT = 25;
     const DOWNLOAD_DIRECTORY = "../download_files/";
     const MINT_PAGE_URL = process.env.MINT_PAGE_URL;
     const API_POST_URL = process.env.API_POST_URL;
-    console.log("MINT_PAGE_URL: ", MINT_PAGE_URL);
-    console.log("API_POST_URL: ", API_POST_URL);
+    console.log("process.env.MINT_PAGE_URL: ", process.env.MINT_PAGE_URL);
+    console.log("process.env.API_POST_URL: ", process.env.API_POST_URL);
 
     let waiting_count = 0;
     let is_drawing_finished = false;
     await interaction.reply("Wait a moment for drawing ...");
+    console.log("-- Send waiting message.");
 
     const prompt = interaction.options.getString("prompt");
     console.log("prompt: ", prompt);
@@ -41,11 +42,15 @@ module.exports = {
       //* Call hugging space with prompt and get response.
       hfGetSpaceQuery(prompt).then(async (response) => {
         // console.log("response: ", response);
-        console.log("response.status: ", response.status);
-        console.log("response.statusText: ", response.statusText);
+        console.log("hfGetSpaceQuery response.status: ", response.status);
+        console.log(
+          "hfGetSpaceQuery response.statusText: ",
+          response.statusText
+        );
 
         //* Handle response error.
         if (response === undefined || response.status !== 200) {
+          console.log("response is undefined or response.status is not 200");
           is_drawing_finished = true;
           await interaction.editReply(
             `Sorry for that server error(${response.statusText}) happened. Please try later.`
@@ -68,6 +73,7 @@ module.exports = {
         let filename = Date.now() + ".jpeg";
         const downloadDirectory = path.join(__dirname, DOWNLOAD_DIRECTORY);
         if (!fs.existsSync(downloadDirectory)) {
+          console.log(`${downloadDirectory} does not exist, so will make it.`);
           fs.mkdirSync(downloadDirectory);
         }
         const filePath = path.join(__dirname, DOWNLOAD_DIRECTORY + filename);
@@ -83,6 +89,7 @@ module.exports = {
           message = `It took ${waiting_count} seconds. Thanks to wait for drawing.`;
         }
         await interaction.editReply(message);
+        console.log("-- Send wait counting message.");
 
         //* Write image attachment message.
         const file = new AttachmentBuilder(filePath);
@@ -100,6 +107,7 @@ module.exports = {
           files: [file],
         });
         // console.log("editReplyResult: ", editReplyResult);
+        console.log("-- Send editReply with file attachment.");
 
         //* Get image cdn url.
         const imageUrl = editReplyResult.attachments.first().url;
@@ -107,7 +115,7 @@ module.exports = {
 
         //* Post imageUrl and prompt to prompt server.
         try {
-          const fetchResponse = await fetch(API_POST_URL, {
+          const imageFetchResponse = await fetch(API_POST_URL, {
             method: "POST",
             headers: {
               Accept: "application/json",
@@ -115,35 +123,41 @@ module.exports = {
             },
             body: JSON.stringify({ prompt: prompt, imageUrl: imageUrl }),
           });
-          console.log("fetchResponse.status: ", fetchResponse.status);
-          console.log("fetchResponse.statusText: ", fetchResponse.statusText);
+          console.log("imageFetchResponse.status: ", imageFetchResponse.status);
+          console.log(
+            "imageFetchResponse.statusText: ",
+            imageFetchResponse.statusText
+          );
 
-          if (fetchResponse.status === 200) {
-            const content = await fetchResponse.json();
-            console.log("content: ", content);
+          if (imageFetchResponse.status === 200) {
+            const content = await imageFetchResponse.json();
+            // console.log("content: ", content);
           } else {
             //* Handle post error case.
-            console.error(fetchResponse);
+            console.error(`imageFetchResponse: ${imageFetchResponse}`);
             is_drawing_finished = true;
-            await interaction.editReply(`Error: ${fetchResponse.statusText}`);
+            await interaction.editReply(
+              `Error: ${imageFetchResponse.statusText}`
+            );
             return;
           }
         } catch (error) {
           //* Handle post error case.
-          console.error(error);
+          console.error(`Try catch error: ${error}`);
           is_drawing_finished = true;
           await interaction.editReply(`Error: ${error}`);
           return;
         }
 
         //* If uploading succeeded, remove downloaded image file.
-        fs.unlink(filePath, (error) => {
+        fs.unlink(filePath, async function (error) {
           if (error) {
             console.log(error);
             is_drawing_finished = true;
+            await interaction.editReply(`Remove download file error: ${error}`);
             return;
           } else {
-            console.log(`Deleted file: ${filePath}`);
+            console.log(`Deleted file success: ${filePath}`);
           }
         });
 
@@ -166,10 +180,11 @@ module.exports = {
         await interaction.editReply({
           embeds: [mintEmbed],
         });
+        console.log("-- Send editReply with embed data.");
       });
     } catch (error) {
-      console.error(error);
-      await interaction.editReply(`Error: ${error}`);
+      console.error(`hfGetSpaceQuery error: ${error}`);
+      await interaction.editReply(`Call hfGetSpaceQuery error: ${error}`);
       is_drawing_finished = true;
       return;
     }
@@ -199,6 +214,8 @@ module.exports = {
         .setTimestamp();
 
       await interaction.editReply({ embeds: [embed] });
+      console.log("-- Send editReply with embed data.");
+      return;
     }
   },
 };
