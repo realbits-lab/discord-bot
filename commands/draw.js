@@ -96,7 +96,7 @@ module.exports = {
         const file = new AttachmentBuilder(filePath);
         const embed = new EmbedBuilder()
           .setColor(0x0099ff)
-          .setTitle("Mint this image with encrypted prompt.")
+          .setTitle("Uploading image and prompt...")
           .setDescription(prompt)
           .setImage("attachment://image.jpeg")
           .setFooter({
