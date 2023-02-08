@@ -28,6 +28,7 @@ module.exports = {
     const DOWNLOAD_DIRECTORY = "../download_files/";
     const MINT_PAGE_URL = process.env.MINT_PAGE_URL;
     const API_POST_URL = process.env.API_POST_URL;
+    const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
     console.log("process.env.MINT_PAGE_URL: ", process.env.MINT_PAGE_URL);
     console.log("process.env.API_POST_URL: ", process.env.API_POST_URL);
 
@@ -95,7 +96,7 @@ module.exports = {
         const file = new AttachmentBuilder(filePath);
         const embed = new EmbedBuilder()
           .setColor(0x0099ff)
-          .setTitle("Mint this image with encrypted prompt.")
+          .setTitle("Uploading image and prompt...")
           .setDescription(prompt)
           .setImage("attachment://image.jpeg")
           .setFooter({
@@ -121,7 +122,11 @@ module.exports = {
               Accept: "application/json",
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ prompt: prompt, imageUrl: imageUrl }),
+            body: JSON.stringify({
+              prompt: prompt,
+              imageUrl: imageUrl,
+              discordBotToken: DISCORD_BOT_TOKEN,
+            }),
           });
           console.log("imageFetchResponse.status: ", imageFetchResponse.status);
           console.log(
