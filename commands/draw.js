@@ -128,6 +128,7 @@ module.exports = {
               discordBotToken: DISCORD_BOT_TOKEN,
             }),
           });
+          console.log("imageFetchResponse: ", imageFetchResponse);
           console.log("imageFetchResponse.status: ", imageFetchResponse.status);
           console.log(
             "imageFetchResponse.statusText: ",
