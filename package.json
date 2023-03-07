@@ -1,0 +1,24 @@
+{
+  "name": "discord-bot",
+  "version": "0.0.1",
+  "engines": {
+    "node": "16.x",
+    "npm": "8.x"
+  },
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "license": "Apache-2.0",
+  "dependencies": {
+    "command-line-args": "^5.2.1",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.0",
+    "node-fetch-commonjs": "^3.2.4"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.15"
+  }
+}
