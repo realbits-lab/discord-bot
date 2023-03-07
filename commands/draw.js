@@ -83,6 +83,7 @@ module.exports = {
 
         //* TODO: Check error response.
         if (jsonResponse.status !== "success") {
+          is_drawing_finished = true;
           await interaction.editReply(`Error: Image server is not connected.`);
           return;
         }
@@ -214,6 +215,7 @@ module.exports = {
         });
       })
       .catch(async function (error) {
+        is_drawing_finished = true;
         await interaction.editReply(`Error: Fetching image can't work.`);
         return;
       });
