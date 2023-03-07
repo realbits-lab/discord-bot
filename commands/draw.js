@@ -62,7 +62,7 @@ module.exports = {
       samples: "1",
       num_inference_steps: "20",
       safety_checker: "yes",
-      enhance_prompt: "yes",
+      enhance_prompt: "no",
       seed: null,
       guidance_scale: 7.5,
       webhook: null,
