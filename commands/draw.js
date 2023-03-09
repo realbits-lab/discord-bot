@@ -53,8 +53,8 @@ module.exports = {
     //*-------------------------------------------------------------------------
     //* Get the prompt input.
     //*-------------------------------------------------------------------------
-    const prompt = interaction.options.getString("prompt");
-    const negativePrompt = interaction.options.getString("negative_prompt");
+    const prompt = interaction.options.getString("prompt") || "";
+    const negativePrompt = interaction.options.getString("negative_prompt") || "";
     console.log("prompt: ", prompt);
     console.log("negativePrompt: ", negativePrompt);
 
@@ -165,10 +165,12 @@ module.exports = {
               },
               body: JSON.stringify({
                 prompt: prompt,
+                negativePrompt: negativePrompt,
                 imageUrl: imageUrl,
                 discordBotToken: DISCORD_BOT_TOKEN,
               }),
             });
+            console.log("imageUploadResponse: ", imageUploadResponse);
 
             if (imageUploadResponse.status === 200) {
               const content = await imageUploadResponse.json();
