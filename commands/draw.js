@@ -30,6 +30,9 @@ module.exports = {
   async execute(interaction) {
     console.log("call /draw command");
 
+    //*-------------------------------------------------------------------------
+    //* Define variables.
+    //*-------------------------------------------------------------------------
     const TEXT2IMG_API_URL = "https://stablediffusionapi.com/api/v3/text2img";
     //* Seconds unit.
     const MAX_WAITING_COUNT = 25;
@@ -47,7 +50,9 @@ module.exports = {
     await interaction.reply("Wait a moment for drawing ...");
     console.log("-- Send waiting message.");
 
-    //* Get the prompt string data.
+    //*-------------------------------------------------------------------------
+    //* Get the prompt input.
+    //*-------------------------------------------------------------------------
     const prompt = interaction.options.getString("prompt");
     const negativePrompt = interaction.options.getString("negative_prompt");
     console.log("prompt: ", prompt);
@@ -71,6 +76,9 @@ module.exports = {
 
     let jsonResponse;
 
+    //*-------------------------------------------------------------------------
+    //* Get the image with prompt.
+    //*-------------------------------------------------------------------------
     fetch(TEXT2IMG_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -121,10 +129,16 @@ module.exports = {
 
           //* Write image attachment message.
           const file = new AttachmentBuilder(filePath);
+          let description = "";
+          if (negativePrompt) {
+            description = `${prompt} (neg: ${negativePrompt})`;
+          } else {
+            description = prompt;
+          }
           const embed = new EmbedBuilder()
             .setColor(0x0099ff)
             .setTitle("Uploading image and prompt...")
-            .setDescription(prompt)
+            .setDescription(description)
             .setImage("attachment://image.png")
             .setFooter({
               text: "Image from realbits.",
@@ -200,7 +214,7 @@ module.exports = {
             .setColor(0x0099ff)
             .setTitle("Mint this image with encrypted prompt.")
             .setURL(mintUrlWithParams)
-            .setDescription(prompt)
+            .setDescription(description)
             .setImage("attachment://image.png")
             .setFooter({
               text: "Image from realbits.",
