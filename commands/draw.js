@@ -207,7 +207,14 @@ module.exports = {
           //* Write mint message title.
           const imageUrlEncodedString = encodeURIComponent(imageUrl);
           const promptEncodedString = encodeURIComponent(prompt);
-          const mintUrlWithParams = `${MINT_PAGE_URL}/${promptEncodedString}/${imageUrlEncodedString}`;
+          let mintUrlWithParams;
+          if (negativePrompt) {
+            const negativePromptEncodedString =
+              encodeURIComponent(negativePrompt);
+            mintUrlWithParams = `${MINT_PAGE_URL}/${promptEncodedString}/${imageUrlEncodedString}/${negativePromptEncodedString}`;
+          } else {
+            mintUrlWithParams = `${MINT_PAGE_URL}/${promptEncodedString}/${imageUrlEncodedString}`;
+          }
           console.log("mintUrlWithParams: ", mintUrlWithParams);
 
           const mintEmbed = new EmbedBuilder()
