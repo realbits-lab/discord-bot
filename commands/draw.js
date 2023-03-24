@@ -10,6 +10,9 @@ const { hfGetSpaceQuery } = require("../hf.js");
 
 module.exports = {
   //* Command data.
+  //* - name.
+  //* - description.
+  //* - options.
   data: new SlashCommandBuilder()
     .setName("draw")
     .setDescription("Draw an picture.")
@@ -30,29 +33,50 @@ module.exports = {
   async execute(interaction) {
     console.log("call /draw command");
 
+    //*-------------------------------------------------------------------------
+    //* Define variables.
+    //*-------------------------------------------------------------------------
+
+    //* Stable diffusion api url.
     const TEXT2IMG_API_URL = "https://stablediffusionapi.com/api/v3/text2img";
-    //* Seconds unit.
+
+    //* Max waiting time by seconds unit.
     const MAX_WAITING_COUNT = 25;
+
+    //* Download directory.
     const DOWNLOAD_DIRECTORY = "../download_files/";
-    //* NFT minting page url address.
+
+    //* NFT minting page url.
     const MINT_PAGE_URL = process.env.MINT_PAGE_URL;
-    //* Image upload url address.
+
+    //* Image upload url.
     const IMAGE_UPLOAD_API_URL = process.env.IMAGE_UPLOAD_API_URL;
+
+    //* Discord bot token.
     const DISCORD_BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
     // console.log("process.env.MINT_PAGE_URL: ", process.env.MINT_PAGE_URL);
     // console.log("process.env.IMAGE_UPLOAD_API_URL: ", process.env.IMAGE_UPLOAD_API_URL);
 
+    //* Waiting time count by second unit.
     let waiting_count = 0;
+
+    //* Flag for checking the drawing finish.
     let is_drawing_finished = false;
+
+    //* Send waiting message to discord.
     await interaction.reply("Wait a moment for drawing ...");
     console.log("-- Send waiting message.");
 
-    //* Get the prompt string data.
-    const prompt = interaction.options.getString("prompt");
-    const negativePrompt = interaction.options.getString("negative_prompt");
+    //*-------------------------------------------------------------------------
+    //* Get the prompt option with negative prompt.
+    //*-------------------------------------------------------------------------
+    const prompt = interaction.options.getString("prompt") || "";
+    const negativePrompt =
+      interaction.options.getString("negative_prompt") || "";
     console.log("prompt: ", prompt);
     console.log("negativePrompt: ", negativePrompt);
 
+    //* Make stable diffusion api option by json.
     const jsonData = {
       key: process.env.STABLE_DIFFUSION_API_KEY,
       prompt: prompt,
@@ -69,27 +93,39 @@ module.exports = {
       track_id: null,
     };
 
-    let jsonResponse;
-
+    //*-------------------------------------------------------------------------
+    //* Get the image with prompt.
+    //*-------------------------------------------------------------------------
     fetch(TEXT2IMG_API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(jsonData),
     })
       .then(async function (fetchResponse) {
-        // console.log("fetchResponse: ", fetchResponse);
-        jsonResponse = await fetchResponse.json();
-        // console.log("jsonResponse: ", jsonResponse);
+        console.log("fetchResponse: ", fetchResponse);
 
-        //* TODO: Check error response.
+        //* Get the stable diffusion api result by json.
+        const jsonResponse = await fetchResponse.json();
+        console.log("jsonResponse: ", jsonResponse);
+
+        //* Check error response.
         if (jsonResponse.status !== "success") {
           is_drawing_finished = true;
+          console.error("jsonResponse.status is not success.");
           await interaction.editReply(`Error: Image server is not connected.`);
           return;
         }
 
         //* Download image data from image generation server.
-        const imageFetchResponse = await fetch(jsonResponse.output);
+        let imageFetchResponse;
+        try {
+          imageFetchResponse = await fetch(jsonResponse.output);
+        } catch (error) {
+          is_drawing_finished = true;
+          console.error(error);
+          await interaction.editReply(`Error: Fetching image has error.`);
+          return;
+        }
 
         //* Save image file.
         let filename = Date.now() + ".png";
@@ -102,7 +138,7 @@ module.exports = {
         const fileStream = fs.createWriteStream(filePath);
         await imageFetchResponse.body.pipe(fileStream);
 
-        //* After download completed, close filestream.
+        //* After download completed, close filestream and finish discord message.
         fileStream.on("finish", async function () {
           fileStream.close();
 
@@ -121,10 +157,16 @@ module.exports = {
 
           //* Write image attachment message.
           const file = new AttachmentBuilder(filePath);
+          let description = "";
+          if (negativePrompt) {
+            description = `${prompt} (neg: ${negativePrompt})`;
+          } else {
+            description = prompt;
+          }
           const embed = new EmbedBuilder()
             .setColor(0x0099ff)
             .setTitle("Uploading image and prompt...")
-            .setDescription(prompt)
+            .setDescription(description)
             .setImage("attachment://image.png")
             .setFooter({
               text: "Image from realbits.",
@@ -151,10 +193,12 @@ module.exports = {
               },
               body: JSON.stringify({
                 prompt: prompt,
+                negativePrompt: negativePrompt,
                 imageUrl: imageUrl,
                 discordBotToken: DISCORD_BOT_TOKEN,
               }),
             });
+            console.log("imageUploadResponse: ", imageUploadResponse);
 
             if (imageUploadResponse.status === 200) {
               const content = await imageUploadResponse.json();
@@ -193,14 +237,21 @@ module.exports = {
           //* Write mint message title.
           const imageUrlEncodedString = encodeURIComponent(imageUrl);
           const promptEncodedString = encodeURIComponent(prompt);
-          const mintUrlWithParams = `${MINT_PAGE_URL}/${promptEncodedString}/${imageUrlEncodedString}`;
+          let mintUrlWithParams;
+          if (negativePrompt) {
+            const negativePromptEncodedString =
+              encodeURIComponent(negativePrompt);
+            mintUrlWithParams = `${MINT_PAGE_URL}/${promptEncodedString}/${imageUrlEncodedString}/${negativePromptEncodedString}`;
+          } else {
+            mintUrlWithParams = `${MINT_PAGE_URL}/${promptEncodedString}/${imageUrlEncodedString}`;
+          }
           console.log("mintUrlWithParams: ", mintUrlWithParams);
 
           const mintEmbed = new EmbedBuilder()
             .setColor(0x0099ff)
             .setTitle("Mint this image with encrypted prompt.")
             .setURL(mintUrlWithParams)
-            .setDescription(prompt)
+            .setDescription(description)
             .setImage("attachment://image.png")
             .setFooter({
               text: "Image from realbits.",
